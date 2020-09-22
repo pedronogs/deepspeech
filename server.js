@@ -26,13 +26,17 @@ router.get('/',function(req, res){
     res.sendFile(path.join(__dirname + '/inference_application.html'));
 });
 
+router.get('/services/listModels',function(req, res) {
+    res.sendFile(path.join(__dirname + '/models.json'));
+});
+
 // Route for uploading .wavfile and running inference
 router.post('/services/uploadAudioFile', upload.single('wavfile'), function(req, res) {
     const { model, scorer } = req.body;
     const uploadedFile = req.file.path;
     
     // Runs inference
-    const { stdout, stderr } = shell.exec(`bash /home/pedronogs/Desktop/teste.sh ${model} ${scorer} audio.wav`);
+    const { stdout, stderr } = shell.exec(`bash /home/server/run_inference.sh ${model} ${scorer} ${uploadedFile}`);
 
     // Delete uploaded file after inference ran
     fs.unlink(uploadedFile, function (err) {
@@ -50,6 +54,6 @@ app.use('/', router);
 app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.listen(process.env.port || 3000);
+app.listen(80);
 
-console.log('Running at Port 3000');
+console.log('Running');
