@@ -164,6 +164,8 @@
                 let data = new FormData();
 
                 data.append('wavfile', insertedFile, insertedFile.name);
+                data.append('model', 'deepspeech_e30_h100.pbmm');
+                data.append('scorer', 'scorer_commonvoice.scorer');
 
                 const config = {
                 headers: { 'content-type': 'multipart/form-data' }
