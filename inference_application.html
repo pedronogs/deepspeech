@@ -35,8 +35,8 @@
             </div>
         </div>
 
+        <script src="./axios.min.js"></script>
 
-        
         <script>
             // General event bindings
             document.querySelector("#audio-file-input").addEventListener("change", validateAudioFileInsert);
@@ -48,12 +48,12 @@
                 let fileLabel = document.querySelector("#audio-file-label");
 
                 // Get uploaded file
-                var uploadedFile = fileInput.files[0];
+                var insertedFile = fileInput.files[0];
                 
                 // Check if file was successfully inserted
-                if (uploadedFile.value != "") {
+                if (insertedFile.value != "") {
                     notificate('success', 'Arquivo inserido com sucesso');
-                    fileLabel.innerHTML = uploadedFile.name;
+                    fileLabel.innerHTML = insertedFile.name;
                 }
                 else {
                     notificate('error', 'Não foi possível inserir o arquivo');
@@ -61,12 +61,12 @@
                 }
 
                 // Check if file format is valid
-                if (uploadedFile.type !== "audio/wav") {
+                if (insertedFile.type !== "audio/wav") {
                     notificate('error', 'O formato do arquivo é diferente de .wav');
                     return;
                 }
 
-                // Call file upload function
+                uploadAudioFile(insertedFile);
             }
 
             // Send simple notification messages
@@ -157,6 +157,18 @@
                 .catch(function(err) { 
                     console.log(err.name, err.message); 
                 });
+            }
+
+            // Uploads audio file to backend
+            function uploadAudioFile (insertedFile) {
+                let data = new FormData();
+
+                data.append('wavfile', insertedFile, insertedFile.name);
+
+                const config = {
+                headers: { 'content-type': 'multipart/form-data' }
+                }
+                axios.post('/services/uploadAudioFile', data, config)
             }
             
         </script>
