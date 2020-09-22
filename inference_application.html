@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MediaCapture and Streams API</title>
+        <meta name="viewport" content="width=device-width">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="text-center" id="notification-bar">
+            <span id="notification-text"><strong>Aguardando notificações...</strong></span>
+        </div>
+
+        <div class="container">
+            <h1 class="text-center mt-4">DeepSpeech - Inferência</h1>
+            <p class="mt-5">
+                Insira um arquivo de áudio <strong>.wav</strong> de até no <strong>máximo 10 segundos</strong> e aguarde até que seja realizada a inferência.<br/>
+                Caso deseje, <strong>grave sua voz ao vivo</strong> e realize a inferência dela !
+            </p>
+        </div>
+
+        <div class="mt-5" id="audio-container">
+            <div class="custom-file mt-2" id="audio-upload-container">
+                <input type="file" class="custom-file-input" accept=".wav" id="audio-file-input">
+                <label class="custom-file-label" for="audio-file-input" id="audio-file-label">Selecionar arquivo .wav</label>
+            </div>
+
+            <span class="text-center mt-3" style="flex: 10%;"><strong>OU</strong></span>
+
+            <div id="live-recorder-container">
+                <button type="button" class="btn btn-success" id="start-button">Iniciar Gravação</button>
+                <button type="button" class="btn btn-danger" id="stop-button">Parar Gravação</button>
+                
+                <audio controls></audio>
+            </div>
+        </div>
+
+
+        
+        <script>
+            // General event bindings
+            document.querySelector('#audio-file-input').addEventListener("change", validateAudioFileInsert);
+
+            // Check if uploaded file was inserted successfully
+            function validateAudioFileInsert () {
+                let fileInput = document.querySelector('#audio-file-input');
+                let fileLabel = document.querySelector('#audio-file-label');
+
+                // Get uploaded file
+                var uploadedFile = fileInput.files[0];
+                
+                // Check if file was successfully inserted
+                if (uploadedFile.value != "") {
+                    notificate('success', 'Arquivo inserido com sucesso');
+                    fileLabel.innerHTML = uploadedFile.name;
+                }
+                else {
+                    notificate('error', 'Não foi possível inserir o arquivo');
+                    return;
+                }
+
+                // Check if file format is valid
+                if (uploadedFile.type !== "audio/wav") {
+                    notificate('error', 'O formato do arquivo é diferente de .wav');
+                    return;
+                }
+
+                // Call file upload function
+            }
+
+            // Send simple notification messages
+            function notificate (option, text, clean = true) {
+                let notificationText = document.querySelector('#notification-text');
+
+                // Clean or not old notifications
+                if (clean === true) {
+                    notificationText.innerHTML = text;
+                }
+                else {
+                    notificationText.innerHTML += " - " + text;
+                }
+
+                if (option == "success") {
+                    notificationText.style.cssText = "color: #03db00; font-weight: bold;";
+                }
+                else {
+                    notificationText.style.cssText = "color: #ea0000; font-weight: bold;";
+                }
+            }
+
+            // Stop audio streaming on page
+            function stopAudioStream (stream) {
+                stream.getTracks().forEach(function(track) {
+                    if (track.readyState == 'live' && track.kind === 'audio') {
+                        track.stop();
+                    }
+                });
+            }
+
+            // Initialization options for getUserMedia
+            let constraintObj = { 
+                audio: true, 
+                video: false
+            }; 
+
+            // navigator.mediaDevices.getUserMedia(constraintObj)
+            // .then(function(mediaStreamObj) {
+            //     notificate('success', 'Teste');
+            //     // Select audio element
+            //     let audio = document.querySelector('audio');
+        
+            //     // Cache DOM elements
+            //     let start = document.getElementById('start-button');
+            //     let stop = document.getElementById('stop-button');
+
+            //     // Setup media recorder
+            //     let mediaRecorder = new MediaRecorder(mediaStreamObj);
+                
+            //     // Chunks of data that will be bundled as audio
+            //     let chunks = [];
+                
+            //     // Start recording audio on pressing start
+            //     start.addEventListener('click', () => { mediaRecorder.start() });
+
+            //     // Stop recording audio on pressing stop
+            //     stop.addEventListener('click', () => { mediaRecorder.stop() });
+
+            //     // Bind event to when there is a chunk of data available, push to chunks
+            //     mediaRecorder.ondataavailable = (event) => {
+            //         chunks.push(event.data);
+            //     }
+
+            //     // Save audio into a blob when recording stops
+            //     mediaRecorder.onstop = () => {
+            //         // Create blob via chunks data (audio .wav)
+            //         let blob = new Blob(chunks, { 'type' : 'audio/wav; codecs=0' });
+                    
+            //         // Reset chunks
+            //         chunks = [];
+
+            //         // Set audio element source to play recorded audio
+            //         let audioURL = window.URL.createObjectURL(blob);
+            //         audio.src = videoURL;
+            //     }
+            // })
+            // .catch(function(err) { 
+            //     console.log(err.name, err.message); 
+            // });
+        </script>
+
+        <style scoped>
+            #notification-bar {
+                width: 100%; 
+                height: 30px; 
+                background-color: rgb(253, 253, 253); 
+                border: 0.2px solid rgb(189, 189, 189);
+            }
+
+            #audio-container {
+                display: flex;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            #audio-upload-container {
+                flex: 45%;
+            }
+
+            #live-recorder-container {
+                flex: 45%;
+                display: flex;
+            }
+
+            #live-recorder-container * {
+                margin-left: 10px;
+            }
+
+        </style>
+    </body>
+</html>
