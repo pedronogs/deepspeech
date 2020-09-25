@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const multer  = require('multer');
 const fs = require('fs');
 const shell = require('shelljs');
+const https = require('https');
 
 // Uses multer to store audio files
 var storage = multer.diskStorage({
@@ -23,7 +24,7 @@ const upload = multer({ storage: storage });
 
 // Main route
 router.get('/',function(req, res){
-    res.sendFile(path.join(__dirname + '/inference_application.html'));
+    res.sendFile(path.join(__dirname + '/index.html'));
 });
 
 router.get('/services/listModels',function(req, res) {
@@ -38,6 +39,8 @@ router.post('/services/uploadAudioFile', upload.single('wavfile'), function(req,
     // Runs inference
     const { stdout, stderr } = shell.exec(`bash /home/server/run_inference.sh ${model} ${scorer} ${uploadedFile}`);
 
+    shell.exec(`ffmpeg -i ${uploadedFile} -c:a pcm_f32le -ar 16000 -y ${uploadedFile}`);
+
     // Delete uploaded file after inference ran
     fs.unlink(uploadedFile, function (err) {
         if (err) {
@@ -51,9 +54,17 @@ router.post('/services/uploadAudioFile', upload.single('wavfile'), function(req,
 
 // Add the router
 app.use('/', router);
-app.use(express.static(__dirname + '/public'));
+app.use('/public', express.static(__dirname + '/public'));
+app.use('/.well-known', express.static(__dirname + '/.well-known'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.listen(80);
+const httpsOptions = {
+	cert: fs.readFileSync('/etc/letsencrypt/live/deepspeech.ddns.net/cert.pem', 'utf8'),
+	ca: fs.readFileSync('/etc/letsencrypt/live/deepspeech.ddns.net/chain.pem', 'utf8'),
+	key: fs.readFileSync('/etc/letsencrypt/live/deepspeech.ddns.net/privkey.pem', 'utf8')
+}
 
-console.log('Running');
+https.createServer(httpsOptions, app)
+.listen(5000, function () {
+	console.log('Running');
+});

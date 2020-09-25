@@ -49,7 +49,10 @@
             </div>
         </div>
 
-        <script src="./axios.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/opus-media-recorder@latest/OpusMediaRecorder.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opus-media-recorder@latest/encoderWorker.umd.js"></script>
+
+        <script src="./public/axios.min.js"></script>
 
         <script>
             // General event bindings
@@ -117,6 +120,7 @@
             }
 
             // Start audio stream, asks for microphone permission
+	   window.MediaRecorder = OpusMediaRecorder;
             function startAudioStream () {
                 // Initialization options for getUserMedia
                 let constraintObj = { 
@@ -126,6 +130,7 @@
 
                 navigator.mediaDevices.getUserMedia(constraintObj)
                 .then(function(mediaStreamObj) {
+			console.log(mediaStreamObj);
                     // Notifications for recording
                     notificate('success', 'Gravando...');
                     let count = 1;
@@ -138,7 +143,7 @@
                     let stop = document.getElementById('stop-button');
 
                     // Setup media recorder
-                    let mediaRecorder = new MediaRecorder(mediaStreamObj);
+			let mediaRecorder = new MediaRecorder(mediaStreamObj, { mimeType: 'audio/wav' });
                     
                     // Chunks of data that will be bundled as audio
                     let chunks = [];
@@ -162,7 +167,7 @@
                     // Save audio into a blob when recording stops
                     mediaRecorder.onstop = () => {
                         // Create blob via chunks data (audio .wav)
-                        audioFile = new Blob(chunks, { 'type' : 'audio/wav; codecs=0' });
+                        audioFile = new Blob(chunks, { 'type' : 'audio/wav; codecs=1' });
 
                         // Reset chunks
                         chunks = [];
@@ -194,8 +199,14 @@
                     headers: { 'content-type': 'multipart/form-data' }
                 };
 
+		// Show user inference is running
+		notificate("success", "Realizando inferência...");
+		document.querySelector("#upload-file-button").disabled = true;
+
                 axios.post('/services/uploadAudioFile', data, config)
                 .then((response) => {
+		    notificate("success", "Inferência realizada com sucesso !");
+
                     document.querySelector('#terminal-inference-text').innerHTML = "&nbsp;\"" + response.data.output + "\"";
                     document.querySelector('#terminal-full-output').innerHTML += response.data.description_or_error.replace(/(?:\r\n|\r|\n)/g, "<br/>") + response.data.output + "<br/><br/>";
                     
@@ -203,7 +214,14 @@
                     audioFile = undefined;
                     document.querySelector("#audio-file-label").innerHTML = "Selecionar arquivo .wav";
                     document.getElementsByTagName('audio')[0].src = '';                
-                });
+                })
+		.catch((error) => {
+		    console.log(error);
+		    notificate("error", "Aconteceu um erro, avise o pedrin.");
+		})
+		.then(() => {
+		    document.querySelector("#upload-file-button").disabled = false;
+		});
             }
             
         </script>
@@ -236,7 +254,7 @@
             }
 
             #terminal-output {
-                position: absolute;
+                position: fixed;
                 bottom: 0;
                 background-color: black;
                 color: greenyellow;
