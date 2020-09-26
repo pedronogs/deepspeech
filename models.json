@@ -1,4 +1,0 @@
-{
-	"models": ["deepspeech_e30_h100.pbmm"],
-	"scorers": ["scorer_commonvoice.scorer"]
-}
