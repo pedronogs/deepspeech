@@ -1,38 +1,38 @@
 {
 	"models": [
 		{
-			"name":"deepspeech_e30_h100.pbmm",
-			"release_date":"17/09/2020",
-			"hidden_layers":"100",
-			"dropout_rate":"0.5",
+			"name": "deepspeech_e30_h100.pbmm",
+			"release_date": "17/09/2020",
+			"hidden_layers": "100",
+			"dropout_rate": "0.5",
 			"epochs": "30",
-			"learning_rate":"0.001",
-			"batch_size":"16",
-			"dataset":"commonvoice",
-			"description":"Primeira model treinada com sucesso, utilizando os valores padrões do deepspeech."
+			"learning_rate": "0.001",
+			"batch_size": "16",
+			"dataset": "commonvoice",
+			"description": "Primeira model treinada com sucesso, utilizando os valores padrões do deepspeech."
 		},
-		 {
-                        "name":"deepspeech_audiobook_e25_h200_l00001_d04.pbmm",
-                        "release_date":"22/09/2020",
-                        "hidden_layers":"200",
-                        "dropout_rate":"0.4",
-                        "epochs": "25",
-                        "learning_rate":"0.0001",
-                        "batch_size":"24",
-                        "dataset":"commonvoice + 30 horas audiobook",
-                        "description":"Model treinada com o dataset do commonvoice + dataset gerado pelo Renan de 30 horas de audiobook. Apresentou significante melhora na predição de audiobook, mas manteve mesma performance na inferência de áudios do commonvoice."
-                }
-
+		{
+			"name": "deepspeech_audiobook_e25_h200_l00001_d04.pbmm",
+			"release_date": "22/09/2020",
+			"hidden_layers": "200",
+			"dropout_rate": "0.4",
+			"epochs": "25",
+			"learning_rate": "0.0001",
+			"batch_size": "24",
+			"dataset": "commonvoice + 30 horas audiobook",
+			"description": "Model treinada com o dataset do commonvoice + dataset gerado pelo Renan de 30 horas de audiobook. Apresentou significante melhora na predição de audiobook, mas manteve mesma performance na inferência de áudios do commonvoice."
+		}
 	],
-	"scorers": [{
-		"name":"audiobook_scorer.scorer",
-		"corpus":"commonvoice + 30 horas audiobook",
-		"description":"Sem mudanças nos parâmetros e sem melhora significativa na inferência."
-	},
-	{
-		"name":"scorer_commonvoice.scorer",
-                "corpus":"commonvoice",
-                "description":"Sem mudanças nos parâmetros e sem melhora significativa na inferência."
-	}
+	"scorers": [
+		{
+			"name": "audiobook_scorer.scorer",
+			"corpus": "commonvoice + 30 horas audiobook",
+			"description": "Sem mudanças nos parâmetros e sem melhora significativa na inferência."
+		},
+		{
+			"name": "scorer_commonvoice.scorer",
+			"corpus": "commonvoice",
+			"description": "Sem mudanças nos parâmetros e sem melhora significativa na inferência."
+		}
 	]
 }

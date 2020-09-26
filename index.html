@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>MediaCapture and Streams API</title>
+        <title>Deepspeech</title>
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     </head>
@@ -12,7 +12,7 @@
         </div>
 
         <div class="container">
-            <h1 class="text-center mt-4">DeepSpeech - Inferência</h1>
+            <h1 class="text-center mt-5">DeepSpeech - Inferência</h1>
             <p class="mt-5">
                 Insira um arquivo de áudio <strong>.wav</strong> de até no <strong>máximo 10 segundos</strong> e aguarde até que seja realizada a inferência.<br/>
                 Caso deseje, <strong>grave sua voz ao vivo</strong> e realize a inferência dela !
@@ -25,18 +25,32 @@
                 <label class="custom-file-label" for="audio-file-input" id="audio-file-label">Selecionar arquivo .wav</label>
             </div>
 
-            <span class="text-center mt-3" style="flex: 10%;"><strong>OU</strong></span>
+            <span class="text-center mt-3 mb-3"><strong>OU</strong></span>
 
-            <div id="live-recorder-container">
-                <button type="button" class="btn btn-success" id="start-button">Iniciar Gravação</button>
-                <button type="button" class="btn btn-danger" id="stop-button">Parar Gravação</button>
+            <div class="justify-content-center" id="live-recorder-container">
+                <button type="button" class="btn btn-outline-success" id="start-button">Iniciar Gravação</button>
+                <button type="button" class="btn btn-outline-danger" id="stop-button">Parar Gravação</button>
                 
-                <audio controls></audio>
+                <audio class="ml-3" controls></audio>
             </div>
         </div>
 
-        <div class="mt-5 text-center"> 
-            <button type="button" class="btn btn-primary" id="upload-file-button">Enviar Arquivo .wav</button>
+        <div class="shadow-lg m-5 p-5" id="components">
+            <div id="components-div">
+                <div id="components-models">
+                    <strong>Selecione uma model</strong>
+                    <select class="custom-select" id="models-select"></select>
+                </div>
+                <div id="components-scorers">
+                    <strong>Selecione um scorer</strong>
+                    <select class="custom-select" id="scorers-select"></select>
+                </div>
+            </div>
+            <div id="components-output"></div>
+        </div>
+
+        <div class="mt-2 mb-5 text-center"> 
+            <button type="button" class="btn btn-primary shadow" id="upload-file-button">Enviar Arquivo .wav</button>
         </div>
 
         <div id="terminal-output">
@@ -44,14 +58,11 @@
                 <span><strong>Resultado da Inferência:</strong></span>
                 <span id="terminal-inference-text">Aguardando...</span>
             </div>
-            <div class="mt-5 pl-5 pr-5" id="terminal-full-output">
-                
-            </div>
+            <div class="mt-5 pl-5 pr-5" id="terminal-full-output"></div>
         </div>
 
-	<script src="https://cdn.jsdelivr.net/npm/opus-media-recorder@latest/OpusMediaRecorder.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/opus-media-recorder@latest/encoderWorker.umd.js"></script>
-
+	    <script src="./public/OpusMediaRecorder.umd.js"></script>
+        <script src="./public/encoderWorker.umd.js"></script>
         <script src="./public/axios.min.js"></script>
 
         <script>
@@ -59,9 +70,59 @@
             document.querySelector("#audio-file-input").addEventListener("change", validateAudioFileInsert);
             document.querySelector("#start-button").addEventListener("click", startAudioStream);
             document.querySelector("#upload-file-button").addEventListener("click", uploadAudioFile);
+            document.querySelector("#models-select").addEventListener("change", changeComponentsText);
+            document.querySelector("#scorers-select").addEventListener("change", changeComponentsText);
 
             // Audio file variable to send for inference
             var audioFile;
+
+            // Render components data
+            var componentsJson;
+            axios.get("/public/components.json")
+            .then((response) => {
+                componentsJson = response.data;
+
+                // Render models data
+                componentsJson.models.forEach((element) => {
+                    document.querySelector("#components-models select").innerHTML += "<option value=" + element.name + ">" + element.name + "</option>";
+                });
+
+                // Render scorers data
+                componentsJson.scorers.forEach((element) => {
+                    document.querySelector("#components-scorers select").innerHTML += "<option value=" + element.name + ">" + element.name + "</option>"; 
+                });
+
+                changeComponentsText(componentsJson.models[0].name, componentsJson.scorers[0].name);
+            });
+
+            // Change model text output based on selection
+            function changeComponentsText (modelName = null, scorerName = null) {
+                var $output = document.querySelector("#components-output");
+                var $modelsSelect = document.querySelector("#models-select");
+                var $scorersSelect = document.querySelector("#scorers-select");
+
+                modelName = $modelsSelect.value == undefined ? modelName : $modelsSelect.value;
+
+                componentsJson.models.forEach((model) => {
+                    if (model.name === modelName) {
+                        $output.innerHTML = "<strong>Descrição da model</strong><br/><br/>";
+                        Object.keys(model).forEach((key) => {
+                            $output.innerHTML += "<strong>" + key + ":</strong> " + model[key] + "<br/>";
+                        });
+                    }
+                });
+
+                scorerName = $scorersSelect.value == undefined ? scorerName : $scorersSelect.value;
+
+                componentsJson.scorers.forEach((scorer) => {
+                    if (scorer.name === scorerName) {
+                        $output.innerHTML += "<br/><strong>Descrição do scorer</strong><br/><br/>";
+                        Object.keys(scorer).forEach((key) => {
+                            $output.innerHTML += "<strong>" + key + ":</strong> " + scorer[key] + "<br/>";
+                        });
+                    }
+                });
+            }
 
             // Check if uploaded file was inserted successfully
             function validateAudioFileInsert () {
@@ -130,7 +191,6 @@
 
                 navigator.mediaDevices.getUserMedia(constraintObj)
                 .then(function(mediaStreamObj) {
-			console.log(mediaStreamObj);
                     // Notifications for recording
                     notificate('success', 'Gravando...');
                     let count = 1;
@@ -143,7 +203,7 @@
                     let stop = document.getElementById('stop-button');
 
                     // Setup media recorder
-			let mediaRecorder = new MediaRecorder(mediaStreamObj, { mimeType: 'audio/wav' });
+			        let mediaRecorder = new MediaRecorder(mediaStreamObj, { mimeType: 'audio/wav' });
                     
                     // Chunks of data that will be bundled as audio
                     let chunks = [];
@@ -178,7 +238,7 @@
                     }
                 })
                 .catch(function(err) { 
-                    console.log(err.name, err.message); 
+                    notificate("error", "Erro: " + err.message); 
                 });
             }
 
@@ -192,20 +252,20 @@
                 let data = new FormData();
 
                 data.append('wavfile', audioFile, "audio.wav");
-                data.append('model', 'deepspeech_e30_h100.pbmm');
-                data.append('scorer', 'scorer_commonvoice.scorer');
+                data.append('model', document.querySelector("#models-select").value);
+                data.append('scorer', document.querySelector("#scorers-select").value);
 
                 const config = {
                     headers: { 'content-type': 'multipart/form-data' }
                 };
 
-		// Show user inference is running
-		notificate("success", "Realizando inferência...");
-		document.querySelector("#upload-file-button").disabled = true;
+                // Show user inference is running
+                notificate("success", "Realizando inferência...");
+                document.querySelector("#upload-file-button").disabled = true;
 
                 axios.post('/services/uploadAudioFile', data, config)
                 .then((response) => {
-		    notificate("success", "Inferência realizada com sucesso !");
+		         notificate("success", "Inferência realizada com sucesso !");
 
                     document.querySelector('#terminal-inference-text').innerHTML = "&nbsp;\"" + response.data.output + "\"";
                     document.querySelector('#terminal-full-output').innerHTML += response.data.description_or_error.replace(/(?:\r\n|\r|\n)/g, "<br/>") + response.data.output + "<br/><br/>";
@@ -215,19 +275,26 @@
                     document.querySelector("#audio-file-label").innerHTML = "Selecionar arquivo .wav";
                     document.getElementsByTagName('audio')[0].src = '';                
                 })
-		.catch((error) => {
-		    console.log(error);
-		    notificate("error", "Aconteceu um erro, avise o pedrin.");
-		})
-		.then(() => {
-		    document.querySelector("#upload-file-button").disabled = false;
-		});
+                .catch((error) => {
+                    console.log(error);
+                    notificate("error", "Aconteceu um erro, avise o pedrin.");
+                })
+                .then(() => {
+                    document.querySelector("#upload-file-button").disabled = false;
+                });
             }
-            
         </script>
 
         <style scoped>
+            html,body {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                background-color: rgb(250,250,250);
+            }
+
             #notification-bar {
+                position: fixed;
                 width: 100%; 
                 height: 30px; 
                 background-color: rgb(253, 253, 253); 
@@ -236,6 +303,8 @@
 
             #audio-container {
                 display: flex;
+                flex-direction: column;
+                flex-wrap: wrap;
                 padding-left: 20px;
                 padding-right: 20px;
             }
@@ -247,25 +316,63 @@
             #live-recorder-container {
                 flex: 45%;
                 display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                margin-top: -20px;
             }
 
             #live-recorder-container * {
+                margin-top: 20px;
+            }
+
+            #live-recorder-container > button:nth-child(2) {
                 margin-left: 10px;
             }
 
+            #upload-file-button {
+                width: 90%;
+                margin-bottom: 20px;
+                margin-top: 10px;
+            }
+
+            #components {
+                display: flex;
+                flex-direction: row;
+                height: 50%;
+            }
+
+            #components div {
+                padding: 20px;
+            }
+
+            #components-div {
+                display: flex;
+                flex-direction: column;
+                text-align: center;
+                align-items: center;
+                justify-content: center;
+                border-right: solid 1px grey;
+                width: 40%;
+            }
+
+            #components-output {
+                width: 100%;
+                height: 100%;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+
             #terminal-output {
-                position: fixed;
-                bottom: 0;
                 background-color: black;
                 color: greenyellow;
                 width: 100%;
-                height: 50%;
+                height: 300px;
                 border: 2px solid grey;
                 padding: 10px;
             }
 
             #terminal-output span {
-                font-size: 35px;
+                font-size: 2rem;
                 color: white;
             }
 
@@ -276,17 +383,7 @@
             #terminal-full-output {
                 height: 70%;
                 width: 100%;
-                overflow-y: scroll;
-                color: 25px;
-            }
-
-            ::-webkit-scrollbar {
-                width: 0px;  /* Remove scrollbar space */
-                background: transparent;  /* Optional: just make scrollbar invisible */
-            }
-            /* Optional: show position indicator in red */
-            ::-webkit-scrollbar-thumb {
-                background: #FF0000;
+                font-size: 1rem;
             }
 
         </style>
